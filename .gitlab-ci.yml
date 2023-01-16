@@ -18,3 +18,19 @@ build-job:
   artifacts:
     paths:
       - $(pwd)/venv
+test-job:
+  tags:
+    - django_app
+  stage: test
+  script:
+    - echo "Activating virtual environment..."
+    - source $(pwd)/venv/bin/activate
+    - echo "Running unit tests..."
+    - python3 manage.py test api_app
+    - echo "Checking the server..."
+    - python3 manage.py runserver &
+    - sleep 10
+    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
+    - sudo pkill python3
+    - deactivate
+    - echo "All tests successfully passed."
