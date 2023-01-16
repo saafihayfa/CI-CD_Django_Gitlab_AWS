@@ -30,6 +30,6 @@ test-job:
     - python3 manage.py runserver &
     - sleep 10
     - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
-    - sudo pkill python3
-    - deactivate
+    - pkill python3
+    - deactivate 
     - echo "All tests successfully passed."
