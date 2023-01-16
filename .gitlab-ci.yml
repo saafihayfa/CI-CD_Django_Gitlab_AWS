@@ -28,12 +28,10 @@ test-job:
     - source $(pwd)/venv/bin/activate
     - echo "Checking the server..."
     - python3 manage.py runserver &
-    - echo "All tests successfully passed."
     - sleep 10
     - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
-    - pkill python3
     - deactivate
-    - echo "All tests successfully passed ."
+    - echo "All tests successfully passed."
 
 
   
