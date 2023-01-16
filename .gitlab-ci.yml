@@ -24,6 +24,7 @@ test-job:
   stage: test
   script:
     - echo "Activating virtual environment..."
+    - virtualenv $(pwd)/venv
     - source $(pwd)/venv/bin/activate
     - echo "Running unit tests..."
     - python3 manage.py test api_app
