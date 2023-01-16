@@ -18,6 +18,7 @@ build-job:
   artifacts:
     paths:
       - $(pwd)/venv
+      
 test-job:
   tags:
     - django_app
@@ -36,7 +37,7 @@ test-job:
 variables:
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
 
-release-job:
+dockerize-job:
   tags:
     - django_app
   stage: dockerize 
