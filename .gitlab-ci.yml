@@ -29,3 +29,10 @@ test-job:
     - echo "Checking the server..."
     - python3 manage.py runserver &
     - echo "All tests successfully passed."
+    - sleep 10
+    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
+    - deactivate
+    - echo "All tests successfully passed."
+
+
+  
