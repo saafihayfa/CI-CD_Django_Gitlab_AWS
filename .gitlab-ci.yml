@@ -1,7 +1,6 @@
 stages:
   - dockerize
  
-
 variables:
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
 
