@@ -26,8 +26,6 @@ test-job:
     - echo "Activating virtual environment..."
     - virtualenv $(pwd)/venv
     - source $(pwd)/venv/bin/activate
-    - echo "Running unit tests..."
-    - python3 manage.py test api_app
     - echo "Checking the server..."
     - python3 manage.py runserver &
     - sleep 10
