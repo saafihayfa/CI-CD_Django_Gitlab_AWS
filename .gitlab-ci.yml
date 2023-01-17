@@ -49,3 +49,6 @@ dockerize-job:
   after_script:
     - docker logout
 
+include:
+  - template: AWS/Deploy-ECS.gitlab-ci.yml
+
