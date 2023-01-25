@@ -1,31 +1,29 @@
-image: docker:latest
+image: docker:19.03.10
 
 services:
   - docker:dind
 
 variables:
-  REPOSITORY_URL: 900844900800.dkr.ecr.us-east-1.amazonaws.com/cicd_django
-  TASK_DEFINITION_NAME: Test-App
-  CLUSTER_NAME: cluster-testgitlab
-  SERVICE_NAME: django-service
+  REPOSITORY_URL: <REPOSITORY_URL>
+  TASK_DEFINITION_NAME: <Task_Definition>
+  CLUSTER_NAME: <CLUSTER_NAME>
+  SERVICE_NAME: <SERVICE_NAME>
 
 before_script:
-    - apk add --update --no-cache jq py-pip
-    - pip install awscli
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set aws_default_region us-east-1
-    - ls -la -F
-    - $(aws ecr get-login --no-include-email --region "${AWS_DEFAULT_REGION}")
-    - IMAGE_TAG="$(echo $CI_COMMIT_SHA | head -c 8)"
+  - apk add --no-cache curl jq python py-pip
+  - pip install awscli
+  - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+  - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+  - aws configure set region $AWS_DEFAULT_REGION
+  - $(aws ecr get-login --no-include-email --region "${AWS_DEFAULT_REGION}")
+  - IMAGE_TAG="$(echo $CI_COMMIT_SHA | head -c 8)"
 
 stages:
- - deploy 
- 
-deploy-job:
-  tags:
-    - django_app
-  stage: deploy
+  - build
+  - deploy
+
+build:
+  stage: build
   script:
     - echo "Building image..."
     - docker build -t $REPOSITORY_URL:latest .
@@ -34,6 +32,11 @@ deploy-job:
     - echo "Pushing image..."
     - docker push $REPOSITORY_URL:latest
     - docker push $REPOSITORY_URL:$IMAGE_TAG
+
+
+deploy:
+  stage: deploy
+  script:
     - echo $REPOSITORY_URL:$IMAGE_TAG
     - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$TASK_DEFINITION_NAME" --region "${AWS_DEFAULT_REGION}")
     - NEW_CONTAINER_DEFINTIION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URL:$IMAGE_TAG" '.taskDefinition.containerDefinitions[0].image = $IMAGE | .taskDefinition.containerDefinitions[0]')
@@ -41,14 +44,3 @@ deploy-job:
     - aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --family "${TASK_DEFINITION_NAME}" --container-definitions "${NEW_CONTAINER_DEFINTIION}"
     - echo "Updating the service..."
     - aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
-
-<<<<<<< HEAD
-   
-    
-
-
-   
-=======
-
-
->>>>>>> refs/remotes/origin/main
