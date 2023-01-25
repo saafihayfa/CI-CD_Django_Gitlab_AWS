@@ -1,40 +1,70 @@
 stages:
   - build
   - test
-  - dockerize
   - deploy 
  
+
+build-job:
+  tags:
+    - django_app
+  stage: build
+  script:
+    - echo "creating virtual environment for the project..."
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - deactivate
+  artifacts:
+    paths:
+      - $(pwd)/venv
+      
+test-job:
+  tags:
+    - django_app
+  stage: test
+  script:
+    - echo "Activating virtual environment..."
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Checking the server..."
+    - python3 manage.py runserver &
+    - sleep 10
+    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
+    - deactivate
+    - echo "All tests successfully passed."
+ 
+
 variables:
-  REPOSITORY_URL: 900844900800.dkr.ecr.us-east-1.amazonaws.com/cicd_django
+  ECR_IMAGE_TAG :  test 
   TASK_DEFINITION_NAME: Test-App
   CLUSTER_NAME: cluster-testgitlab
   SERVICE_NAME: django-service
-  
+  ECR_REGISTRY : 900844900800.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY : cicd_django
+
 deploy-job:
   tags:
     - django_app
   stage: deploy
   before_script:
     
-   
+    - pip install awscli
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set aws_default_region us-east-1
     - ls -la -F
     - $(aws ecr get-login --no-include-email --region "${AWS_DEFAULT_REGION}")
-    - $CONTAINER_IMAGE="$(echo $CI_COMMIT_SHA | head -c 8)"
+   
 
   script:
     - echo "Building image..."
-    - docker build -t $REPOSITORY_URL:latest .
-    - echo "Tagging image..."
-    - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$CONTAINER_IMAGE
+    - docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$ECR_IMAGE_TAG .
     - echo "Pushing image..."
-    - docker push $REPOSITORY_URL:latest
-    - docker push $REPOSITORY_URL:$CONTAINER_IMAGE
-    - echo $REPOSITORY_URL:$CONTAINER_IMAGE
+    - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ECR_IMAGE_TAG 
+    - echo $ECR_REGISTRY/$ECR_REPOSITORY:$ECR_IMAGE_TAG
     - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$TASK_DEFINITION_NAME" --region "${AWS_DEFAULT_REGION}")
-    - NEW_CONTAINER_DEFINTIION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URL:$CONTAINER_IMAGE" '.taskDefinition.containerDefinitions[0].image = $IMAGE | .taskDefinition.containerDefinitions[0]')
+    - NEW_CONTAINER_DEFINTIION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$ECR_IMAGE_TAG" '.taskDefinition.containerDefinitions[0].image = $IMAGE | .taskDefinition.containerDefinitions[0]')
     - echo "Registering new container definition..."
     - aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --family "${TASK_DEFINITION_NAME}" --container-definitions "${NEW_CONTAINER_DEFINTIION}"
     - echo "Updating the service..."
