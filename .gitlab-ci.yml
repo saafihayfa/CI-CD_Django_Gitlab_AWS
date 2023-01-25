@@ -42,8 +42,13 @@ deploy-job:
     - echo "Updating the service..."
     - aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
 
+<<<<<<< HEAD
    
     
 
 
    
+=======
+
+
+>>>>>>> refs/remotes/origin/main
