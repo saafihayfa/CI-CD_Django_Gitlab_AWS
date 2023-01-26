@@ -1,5 +1,21 @@
 stages:
+  - build
   - deploy 
+
+build-job:
+  tags:
+    - django_app
+  stage: build 
+  script:
+    - echo "creating virtual environment for the project..."
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - deactivate
+  artifacts:
+    paths:
+      - $(pwd)/venv
 
 variables:
   AWS_DEFAULT_REGION: us-east-1
@@ -18,15 +34,15 @@ deploy-job:
   before_script:
    #- amazon-linux-extras install docker 
     - pip install awscli
-   #- aws --version
+    - aws --version
     - docker --version
    
-  
   script:
     - echo "Building image..."
     - docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$CI_PIPELINE_IID .
     - echo "Pushing image..."
-    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+    - docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) $ECR_REGISTRY
+#   - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
     - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$CI_PIPELINE_IID
     - echo $ECR_REGISTRY/$ECR_REPOSITORY:$CI_PIPELINE_IID
     
