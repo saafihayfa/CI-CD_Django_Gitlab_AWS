@@ -10,8 +10,7 @@ deploy-job:
   tags:
     - django_app
   stage: deploy
-  image: 
-    name: amazon/aws-cli
+  image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:v0.3.6
     entrypoint: [""]
   services: 
     - docker:dind
