@@ -34,7 +34,7 @@ deploy-job:
   before_script:
    #- amazon-linux-extras install docker 
     - pip install awscli
-    - aws --version
+   # - aws --version
     - docker --version
    
   script:
