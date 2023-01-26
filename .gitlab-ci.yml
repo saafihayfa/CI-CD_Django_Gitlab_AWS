@@ -1,6 +1,34 @@
 stages:
+  - build
+  - test
   - deploy 
 
+build-job:
+  tags:
+    - django_app
+  stage: build 
+  script:
+    - echo "creating virtual environment for the project..."
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Installing requirements..."
+    - pip install -r requirements.txt
+    - deactivate
+
+test-job:
+  tags:
+    - django_app
+  stage: test
+  script:
+    - echo "Activating virtual environment..."
+    - virtualenv $(pwd)/venv
+    - source $(pwd)/venv/bin/activate
+    - echo "Checking the server..."
+    - python3 manage.py runserver &
+    - sleep 10
+    - curl -sSf http://localhost:8000 > /dev/null && echo "Server is Up"
+    - deactivate
+    - echo "All tests successfully passed."
 
 
 variables:
